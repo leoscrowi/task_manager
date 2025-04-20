@@ -1,0 +1,1 @@
+DROP ENUM IF EXISTS task_status CASCADE;

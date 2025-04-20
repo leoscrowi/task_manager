@@ -1,0 +1,1 @@
+DROP ENUM IF EXISTS repeatable_task CASCADE;
