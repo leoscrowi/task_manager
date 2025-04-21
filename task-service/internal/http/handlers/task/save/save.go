@@ -14,16 +14,31 @@ import (
 	"github.com/google/uuid"
 )
 
+// swagger:model
 type Request struct {
-	UserId       string `json:"user_id" validate:"id_valid,required"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	RepeatTask   string `json:"repeat_task" validate:"repeat_task_valid"`
+
+	// required: true
+	// example: b063de04-6fd7-41cd-8f4c-8d113e786be8
+	UserId string `json:"user_id" validate:"id_valid,required"`
+
+	// example: Sample Task
+	Title string `json:"title" example:"Sample Task"`
+
+	// example: This is a sample task description.
+	Description string `json:"description"`
+
+	// enum: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
+	// example: DAILY
+	RepeatTask string `json:"repeat_task" validate:"repeat_task_valid"`
+
+	// example: b063de04-6fd7-41cd-8f4c-8d113e786be8
 	ParentTaskId string `json:"parent_task_id,omitempty" validate:"id_valid"`
 }
 
 type Response struct {
 	response.Response
+
+	// example: b063de04-6fd7-41cd-8f4c-8d113e786be8
 	TaskId string `json:"task_id,omitempty"`
 }
 
@@ -31,6 +46,16 @@ type TaskSaver interface {
 	SaveTask(entity domain.Task) error
 }
 
+// @Summary Create task
+// @Description Create and save task
+// @Tags Task
+// @Accept json
+// @Produce json
+// @Param request body Request true "Request"
+// @Success 201 {object} Response "Task created successfully"
+// @Failure 400 {object} response.Response "Invalid request"
+// @Failure 500 {object} response.Response "Failed to save task"
+// @Router /task [post]
 func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.task.save.New"
@@ -41,6 +66,7 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Failed to decode request", sl.Error(err))
 			render.JSON(w, r, response.Error)
 			return
@@ -53,6 +79,7 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 		validate.RegisterValidation("id_valid", IsValidId)
 
 		if err := validate.Struct(req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Invalid request", sl.Error(err))
 			render.JSON(w, r, response.Error("Invalid request"))
 			return
@@ -60,6 +87,7 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 
 		task, err := CreateTask(req)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Invalid request", sl.Error(err))
 			render.JSON(w, r, response.Error("Invalid request"))
 			return
@@ -67,17 +95,19 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 
 		err = taskSaver.SaveTask(task)
 		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			log.Error("Failed to save task", sl.Error(err))
 			render.JSON(w, r, response.Error("Failed to save task"))
 			return
 		}
 
-		log.Info("Task added", slog.String("TaskId", task.Id.String()))
+		log.Info("Task created successfully", slog.String("TaskId", task.Id.String()))
 
 		render.JSON(w, r, Response{
 			Response: response.OK(),
 			TaskId:   task.Id.String(),
 		})
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 

@@ -19,6 +19,11 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
+// @title 			Task service API
+// @version 		1.0
+// @description 	This is a sample task service API.
+// @host 			localhost:8080
+// @BasePath 		/task
 func main() {
 	cfg := config.MustLoad()
 

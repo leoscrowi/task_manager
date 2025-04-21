@@ -1,0 +1,116 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample task service API.",
+        "title": "Task service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/task",
+    "paths": {
+        "/task": {
+            "post": {
+                "description": "Create and save task",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Create task",
+                "parameters": [
+                    {
+                        "description": "Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/save.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Task created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/save.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to save task",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "response.Response": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "save.Request": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "description": {
+                    "description": "example: This is a sample task description.",
+                    "type": "string"
+                },
+                "parent_task_id": {
+                    "description": "example: b063de04-6fd7-41cd-8f4c-8d113e786be8",
+                    "type": "string"
+                },
+                "repeat_task": {
+                    "description": "enum: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER\nexample: DAILY",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "example: Sample Task",
+                    "type": "string",
+                    "example": "Sample Task"
+                },
+                "user_id": {
+                    "description": "required: true\nexample: b063de04-6fd7-41cd-8f4c-8d113e786be8",
+                    "type": "string"
+                }
+            }
+        },
+        "save.Response": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "task_id": {
+                    "description": "example: b063de04-6fd7-41cd-8f4c-8d113e786be8",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
