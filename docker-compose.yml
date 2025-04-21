@@ -10,3 +10,15 @@ services:
     ports:
       - "6432:5432"
     restart: unless-stopped
+
+  http-server:
+    build:
+      context: ./task-service
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./task-service/config/local.yaml:/app/config/local.yaml
+    environment:
+      - CONFIG_PATH=/app/config/local.yaml
+    restart: unless-stopped
