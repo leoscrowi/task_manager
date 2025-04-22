@@ -25,12 +25,10 @@ const (
 )
 
 type Task struct {
-	Id           uuid.UUID
-	UserId       uuid.UUID
-	Title        string
-	Description  string
-	TaskStatus   TaskStatus
-	CreatedAt    time.Time
-	RepeatTask   TaskRepeatType
-	ParentTaskId uuid.UUID
+	Id          uuid.UUID
+	Title       string
+	Description string
+	TaskStatus  TaskStatus
+	CreatedAt   time.Time
+	RepeatTask  TaskRepeatType
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"task-service/internal/lib/logger/sl"
 	"task-service/internal/lib/logger/sl/slogpretty"
 	"task-service/internal/repo/postgresql"
+	"task-service/internal/repo/redis"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -68,6 +70,13 @@ func main() {
 	}
 	log.Info("Database connection established successfully")
 
+	rdb, err := redis.NewClient(context.Background(), cfg)
+	if err != nil {
+		log.Error("Failed to connect to Redis", sl.Error(err))
+		os.Exit(1)
+	}
+	log.Info("Redis connection established successfully")
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -75,10 +84,10 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/task", save.New(log, db))
-	router.Get("/task/{id}", get.New(log, db))
-	router.Delete("/task/{id}", delete.New(log, db))
-	router.Patch("/task/{id}", change.New(log, db))
+	router.Post("/task", save.New(log, db, rdb))
+	router.Get("/task/{id}", get.New(log, db, rdb))
+	router.Delete("/task/{id}", delete.New(log, db, rdb))
+	router.Patch("/task/{id}", change.New(log, db, rdb))
 
 	log.Info("Starting service", slog.String("address", cfg.HTTPServer.Address))
 

@@ -8,7 +8,7 @@ import (
 func IsValidRepeatTask(fl validator.FieldLevel) bool {
 	repeat := fl.Field().String()
 	switch repeat {
-	case "DAILY", "WEEKLY", "MONTHLY", "YEARLY", "NEVER":
+	case "DAILY", "WEEKLY", "MONTHLY", "YEARLY", "NEVER", "":
 		return true
 	default:
 		return false

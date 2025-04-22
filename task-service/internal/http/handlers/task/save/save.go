@@ -1,12 +1,14 @@
 package save
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"task-service/domain"
 	"task-service/internal/http/handlers/validators"
 	"task-service/internal/lib/api/response"
 	"task-service/internal/lib/logger/sl"
+	"task-service/internal/repo/redis"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -17,23 +19,15 @@ import (
 
 // swagger:model
 type Request struct {
-
-	// required: true
-	// example: b063de04-6fd7-41cd-8f4c-8d113e786be8
-	UserId string `json:"user_id" validate:"id_valid,required"`
-
 	// example: Sample Task
-	Title string `json:"title" example:"Sample Task"`
+	Title string `json:"title,omitempty"`
 
 	// example: This is a sample task description.
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 
 	// enum: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
 	// example: DAILY
-	RepeatTask string `json:"repeat_task" validate:"repeat_task_valid"`
-
-	// example: b063de04-6fd7-41cd-8f4c-8d113e786be8
-	ParentTaskId string `json:"parent_task_id,omitempty" validate:"id_valid"`
+	RepeatTask string `json:"repeat_task,omitempty" validate:"repeat_task_valid"`
 }
 
 type Response struct {
@@ -57,7 +51,7 @@ type TaskSaver interface {
 // @Failure 400 {object} response.Response "Invalid request"
 // @Failure 500 {object} response.Response "Failed to save task"
 // @Router /task [post]
-func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
+func New(log *slog.Logger, taskSaver TaskSaver, rdb *redis.RedisDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.task.save.New"
 
@@ -77,10 +71,8 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 
 		validate := validator.New()
 		validate.RegisterValidation("repeat_task_valid", validators.IsValidRepeatTask)
-		validate.RegisterValidation("id_valid", validators.IsValidId)
 
 		if err := validate.Struct(req); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Invalid request", sl.Error(err))
 			render.JSON(w, r, response.ErrorClient("Invalid request"))
 			return
@@ -88,7 +80,6 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 
 		task, err := CreateTask(req)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Invalid request", sl.Error(err))
 			render.JSON(w, r, response.ErrorClient("Invalid request"))
 			return
@@ -96,10 +87,21 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 
 		err = taskSaver.SaveTask(task)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
 			log.Error("Failed to save task", sl.Error(err))
 			render.JSON(w, r, response.Error("Failed to save task"))
 			return
+		}
+
+		ctx := r.Context()
+		taskJSON, err := json.Marshal(task)
+		if err != nil {
+			log.Error("Failed to marshal task", sl.Error(err))
+		} else {
+			if err := rdb.Set(ctx, task.Id.String(), string(taskJSON), 5*time.Minute); err != nil {
+				log.Error("Failed to set task in Redis", sl.Error(err))
+			} else {
+				log.Info("Task cached in Redis", slog.String("TaskId", task.Id.String()))
+			}
 		}
 
 		log.Info("Task created successfully", slog.String("TaskId", task.Id.String()))
@@ -113,15 +115,17 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 }
 
 func CreateTask(req Request) (domain.Task, error) {
+	if req.RepeatTask == "" {
+		req.RepeatTask = "NEVER"
+	}
+
 	task := domain.Task{
-		Id:           uuid.New(),
-		UserId:       uuid.MustParse(req.UserId),
-		Title:        req.Title,
-		Description:  req.Description,
-		TaskStatus:   domain.TODO,
-		CreatedAt:    time.Now(),
-		RepeatTask:   domain.TaskRepeatType(req.RepeatTask),
-		ParentTaskId: uuid.Nil,
+		Id:          uuid.New(),
+		Title:       req.Title,
+		Description: req.Description,
+		TaskStatus:  domain.TODO,
+		CreatedAt:   time.Now(),
+		RepeatTask:  domain.TaskRepeatType(req.RepeatTask),
 	}
 
 	return task, nil

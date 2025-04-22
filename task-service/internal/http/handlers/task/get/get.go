@@ -1,12 +1,15 @@
 package get
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"task-service/domain"
 	"task-service/internal/http/handlers/validators"
 	"task-service/internal/lib/api/response"
 	"task-service/internal/lib/logger/sl"
+	"task-service/internal/repo/redis"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,14 +26,12 @@ type Request struct {
 
 type Response struct {
 	response.Response
-	Id           string `json:"id" validate:"id_valid,required"`
-	UserId       string `json:"user_id" validate:"id_valid,required"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	TaskStatus   string `json:"task_status"`
-	CreatedAt    string `json:"created_at"`
-	RepeatTask   string `json:"repeat_task" validate:"repeat_task_valid"`
-	ParentTaskId string `json:"parent_task_id,omitempty" validate:"id_valid"`
+	Id          string `json:"id" validate:"id_valid,required"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	TaskStatus  string `json:"task_status"`
+	CreatedAt   string `json:"created_at"`
+	RepeatTask  string `json:"repeat_task" validate:"repeat_task_valid"`
 }
 
 type TaskGetter interface {
@@ -47,7 +48,7 @@ type TaskGetter interface {
 // @Failure 400 {object} response.Response "Invalid request"
 // @Failure 500 {object} response.Response "Failed to save task"
 // @Router /task [post]
-func New(log *slog.Logger, taskGetter TaskGetter) http.HandlerFunc {
+func New(log *slog.Logger, taskGetter TaskGetter, rdb *redis.RedisDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.task.get.New"
 
@@ -66,6 +67,30 @@ func New(log *slog.Logger, taskGetter TaskGetter) http.HandlerFunc {
 			return
 		}
 
+		ctx := r.Context()
+		log.Info(req.Id)
+		cached, err := rdb.Get(ctx, req.Id)
+		if err != nil {
+			log.Info("Failed to get task from Redis", sl.Error(err))
+		}
+		if cached != "" {
+			var task domain.Task
+			if err := json.Unmarshal([]byte(cached), &task); err == nil {
+				log.Info("Task retrieved from Redis", slog.String("TaskId", task.Id.String()))
+				render.JSON(w, r, Response{
+					Response:    response.StatusOK(),
+					Id:          task.Id.String(),
+					Title:       task.Title,
+					Description: task.Description,
+					TaskStatus:  string(task.TaskStatus),
+					CreatedAt:   task.CreatedAt.Format("2006-01-02 15:04:05"),
+					RepeatTask:  string(task.RepeatTask),
+				})
+				return
+			}
+		}
+		log.Info("Task not found in Redis, fetching from database")
+
 		task, err := taskGetter.GetTaskById(uuid.MustParse(req.Id))
 		if err != nil {
 			log.Error("Failed to get task", sl.Error(err))
@@ -73,23 +98,24 @@ func New(log *slog.Logger, taskGetter TaskGetter) http.HandlerFunc {
 			return
 		}
 
-		log.Info("Task get", slog.String("TaskId", task.Id.String()))
-
-		var parentId string
-		if task.ParentTaskId != uuid.Nil {
-			parentId = task.ParentTaskId.String()
+		taskJSON, err := json.Marshal(task)
+		if err != nil {
+			log.Error("Failed to marshal task", sl.Error(err))
+		} else {
+			if err := rdb.Set(ctx, req.Id, string(taskJSON), 5*time.Minute); err != nil {
+				log.Error("Failed to set task in Redis", sl.Error(err))
+			}
 		}
 
+		log.Info("Task get", slog.String("TaskId", task.Id.String()))
 		render.JSON(w, r, Response{
-			Response:     response.StatusOK(),
-			Id:           task.Id.String(),
-			UserId:       task.UserId.String(),
-			Title:        task.Title,
-			Description:  task.Description,
-			TaskStatus:   string(task.TaskStatus),
-			CreatedAt:    task.CreatedAt.Format("2006-01-02 15:04:05"),
-			RepeatTask:   string(task.RepeatTask),
-			ParentTaskId: parentId,
+			Response:    response.StatusOK(),
+			Id:          task.Id.String(),
+			Title:       task.Title,
+			Description: task.Description,
+			TaskStatus:  string(task.TaskStatus),
+			CreatedAt:   task.CreatedAt.Format("2006-01-02 15:04:05"),
+			RepeatTask:  string(task.RepeatTask),
 		})
 	}
 }
