@@ -68,7 +68,6 @@ func New(log *slog.Logger, taskGetter TaskGetter, rdb *redis.RedisDB) http.Handl
 		}
 
 		ctx := r.Context()
-		log.Info(req.Id)
 		cached, err := rdb.Get(ctx, req.Id)
 		if err != nil {
 			log.Info("Failed to get task from Redis", sl.Error(err))

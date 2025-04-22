@@ -45,7 +45,6 @@ func New(log *slog.Logger, taskDeleter taskDeleter, rdb *redis.RedisDB) http.Han
 		const op = "handlers.task.delete.New"
 
 		log = log.With(slog.String("op", op), slog.String("request_id", middleware.GetReqID(r.Context())))
-		log.Info("DEBUG")
 
 		req := Request{
 			Id: chi.URLParam(r, "id"),
