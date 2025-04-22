@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"task-service/domain"
+	"task-service/internal/http/handlers/validators"
 	"task-service/internal/lib/api/response"
 	"task-service/internal/lib/logger/sl"
 	"time"
@@ -68,20 +69,20 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Failed to decode request", sl.Error(err))
-			render.JSON(w, r, response.Error)
+			render.JSON(w, r, response.ErrorClient("Failed to decode request"))
 			return
 		}
 
 		log.Info("Request decoded to JSON", slog.Any("request", req))
 
 		validate := validator.New()
-		validate.RegisterValidation("repeat_task_valid", IsValidRepeatTask)
-		validate.RegisterValidation("id_valid", IsValidId)
+		validate.RegisterValidation("repeat_task_valid", validators.IsValidRepeatTask)
+		validate.RegisterValidation("id_valid", validators.IsValidId)
 
 		if err := validate.Struct(req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Invalid request", sl.Error(err))
-			render.JSON(w, r, response.Error("Invalid request"))
+			render.JSON(w, r, response.ErrorClient("Invalid request"))
 			return
 		}
 
@@ -89,7 +90,7 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Invalid request", sl.Error(err))
-			render.JSON(w, r, response.Error("Invalid request"))
+			render.JSON(w, r, response.ErrorClient("Invalid request"))
 			return
 		}
 
@@ -104,7 +105,7 @@ func New(log *slog.Logger, taskSaver TaskSaver) http.HandlerFunc {
 		log.Info("Task created successfully", slog.String("TaskId", task.Id.String()))
 
 		render.JSON(w, r, Response{
-			Response: response.OK(),
+			Response: response.StatusCreated(),
 			TaskId:   task.Id.String(),
 		})
 		w.WriteHeader(http.StatusCreated)
@@ -119,28 +120,9 @@ func CreateTask(req Request) (domain.Task, error) {
 		Description:  req.Description,
 		TaskStatus:   domain.TODO,
 		CreatedAt:    time.Now(),
-		RepeatTask:   domain.TaskReapeatType(req.RepeatTask),
+		RepeatTask:   domain.TaskRepeatType(req.RepeatTask),
 		ParentTaskId: uuid.Nil,
 	}
 
 	return task, nil
-}
-
-func IsValidRepeatTask(fl validator.FieldLevel) bool {
-	repeat := fl.Field().String()
-	switch repeat {
-	case "DAILY", "WEEKLY", "MONTHLY", "YEARLY", "NEVER":
-		return true
-	default:
-		return false
-	}
-}
-
-func IsValidId(fl validator.FieldLevel) bool {
-	id := fl.Field().String()
-	_, err := uuid.Parse(id)
-	if err != nil {
-		return false
-	}
-	return true
 }

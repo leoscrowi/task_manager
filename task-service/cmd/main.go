@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"task-service/internal/config"
+	"task-service/internal/http/handlers/task/change"
+	"task-service/internal/http/handlers/task/delete"
 	"task-service/internal/http/handlers/task/get"
 	"task-service/internal/http/handlers/task/save"
 	"task-service/internal/lib/logger/sl"
@@ -75,6 +77,8 @@ func main() {
 
 	router.Post("/task", save.New(log, db))
 	router.Get("/task/{id}", get.New(log, db))
+	router.Delete("/task/{id}", delete.New(log, db))
+	router.Patch("/task/{id}", change.New(log, db))
 
 	log.Info("Starting service", slog.String("address", cfg.HTTPServer.Address))
 

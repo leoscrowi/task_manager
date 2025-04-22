@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"task-service/domain"
+	"task-service/internal/http/handlers/validators"
 	"task-service/internal/lib/api/response"
 	"task-service/internal/lib/logger/sl"
 
@@ -14,7 +15,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// swagger:model
 type Request struct {
+	// example: b063de04-6fd7-41cd-8f4c-8d113e786be8
 	Id string `json:"id" validate:"id_valid,required"`
 }
 
@@ -34,6 +37,16 @@ type TaskGetter interface {
 	GetTaskById(id uuid.UUID) (domain.Task, error)
 }
 
+// @Summary Get task by uuid
+// @Description Get task by its UUID
+// @Tags Task
+// @Accept json
+// @Produce json
+// @Param request body Request true "Request"
+// @Success 200 {object} Response "Task retrieved successfully"
+// @Failure 400 {object} response.Response "Invalid request"
+// @Failure 500 {object} response.Response "Failed to save task"
+// @Router /task [post]
 func New(log *slog.Logger, taskGetter TaskGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.task.get.New"
@@ -45,11 +58,11 @@ func New(log *slog.Logger, taskGetter TaskGetter) http.HandlerFunc {
 		}
 
 		validate := validator.New()
-		validate.RegisterValidation("id_valid", IsValidId)
+		validate.RegisterValidation("id_valid", validators.IsValidId)
 
 		if err := validate.Struct(req); err != nil {
 			log.Error("Invalid request", sl.Error(err))
-			render.JSON(w, r, response.Error("Invalid request"))
+			render.JSON(w, r, response.ErrorClient("Invalid request"))
 			return
 		}
 
@@ -68,7 +81,7 @@ func New(log *slog.Logger, taskGetter TaskGetter) http.HandlerFunc {
 		}
 
 		render.JSON(w, r, Response{
-			Response:     response.OK(),
+			Response:     response.StatusOK(),
 			Id:           task.Id.String(),
 			UserId:       task.UserId.String(),
 			Title:        task.Title,
@@ -79,14 +92,4 @@ func New(log *slog.Logger, taskGetter TaskGetter) http.HandlerFunc {
 			ParentTaskId: parentId,
 		})
 	}
-}
-
-// TODO: вынести в отдельный пакет валидации
-func IsValidId(fl validator.FieldLevel) bool {
-	id := fl.Field().String()
-	_, err := uuid.Parse(id)
-	if err != nil {
-		return false
-	}
-	return true
 }

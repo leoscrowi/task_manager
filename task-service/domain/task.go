@@ -14,14 +14,14 @@ const (
 	IN_PROGRESS TaskStatus = "IN_PROGRESS"
 )
 
-type TaskReapeatType string
+type TaskRepeatType string
 
 const (
-	DAILY   TaskReapeatType = "DAILY"
-	WEEKLY  TaskReapeatType = "WEEKLY"
-	MONTHLY TaskReapeatType = "MONTHLY"
-	YEARLY  TaskReapeatType = "YEARLY"
-	NEVER   TaskReapeatType = "NEVER"
+	DAILY   TaskRepeatType = "DAILY"
+	WEEKLY  TaskRepeatType = "WEEKLY"
+	MONTHLY TaskRepeatType = "MONTHLY"
+	YEARLY  TaskRepeatType = "YEARLY"
+	NEVER   TaskRepeatType = "NEVER"
 )
 
 type Task struct {
@@ -31,6 +31,6 @@ type Task struct {
 	Description  string
 	TaskStatus   TaskStatus
 	CreatedAt    time.Time
-	RepeatTask   TaskReapeatType
+	RepeatTask   TaskRepeatType
 	ParentTaskId uuid.UUID
 }

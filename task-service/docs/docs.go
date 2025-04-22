@@ -59,10 +59,223 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "description": "Delete task by its UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Delete task by uuid",
+                "parameters": [
+                    {
+                        "description": "Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/delete.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/delete.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete task",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Update task by its UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Task"
+                ],
+                "summary": "Update task by uuid",
+                "parameters": [
+                    {
+                        "description": "Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/change.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/change.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update task",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
             }
         }
     },
     "definitions": {
+        "change.Request": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "description": {
+                    "description": "example: This is a new task description.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "example: b063de04-6fd7-41cd-8f4c-8d113e786be8",
+                    "type": "string"
+                },
+                "repeat_task": {
+                    "description": "enum: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER\nexample: DAILY",
+                    "type": "string"
+                },
+                "task_status": {
+                    "description": "enum: TODO, IN_PROGRESS, DONE\nexample: TODO",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "example: New Task Title",
+                    "type": "string"
+                }
+            }
+        },
+        "change.Response": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "delete.Request": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "description": "example: b063de04-6fd7-41cd-8f4c-8d113e786be8",
+                    "type": "string"
+                }
+            }
+        },
+        "delete.Response": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "get.Request": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "description": "example: b063de04-6fd7-41cd-8f4c-8d113e786be8",
+                    "type": "string"
+                }
+            }
+        },
+        "get.Response": {
+            "type": "object",
+            "required": [
+                "id",
+                "user_id"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "parent_task_id": {
+                    "type": "string"
+                },
+                "repeat_task": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "task_status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "response.Response": {
             "type": "object",
             "properties": {
@@ -70,7 +283,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -110,7 +323,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "task_id": {
                     "description": "example: b063de04-6fd7-41cd-8f4c-8d113e786be8",

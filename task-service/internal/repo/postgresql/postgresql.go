@@ -125,3 +125,40 @@ func (r *Repository) GetTaskById(id uuid.UUID) (domain.Task, error) {
 
 	return task, nil
 }
+
+func (r *Repository) UpdateTaskById(id uuid.UUID, updates domain.Task) error {
+	const op = "repo.postgresql.UpdateTaskById"
+
+	query := `
+        UPDATE tasks
+        SET 
+            title = COALESCE($1, title),
+            description = COALESCE($2, description),
+            status = COALESCE($3, status),
+            repeatable = COALESCE($4, repeatable)
+        WHERE id = $5
+    `
+
+	result, err := r.db.Exec(query,
+		sql.NullString{String: updates.Title, Valid: updates.Title != ""},
+		sql.NullString{String: updates.Description, Valid: updates.Description != ""},
+		sql.NullString{String: string(updates.TaskStatus), Valid: updates.TaskStatus != ""},
+		sql.NullString{String: string(updates.RepeatTask), Valid: updates.RepeatTask != ""},
+		id,
+	)
+
+	if err != nil {
+		return fmt.Errorf("%s: failed to update task: %w", op, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%s: failed to update task: %w", op, err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("%s: task with id %s not found", op, id)
+	}
+
+	return nil
+}
