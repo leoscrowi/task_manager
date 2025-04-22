@@ -1,12 +1,15 @@
 package change
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"task-service/domain"
 	"task-service/internal/http/handlers/validators"
 	"task-service/internal/lib/api/response"
 	"task-service/internal/lib/logger/sl"
+	"task-service/internal/repo/redis"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -42,6 +45,7 @@ type Response struct {
 
 type TaskChanger interface {
 	UpdateTaskById(id uuid.UUID, updates domain.Task) error
+	GetTaskById(id uuid.UUID) (domain.Task, error)
 }
 
 // @Summary Update task by uuid
@@ -54,7 +58,7 @@ type TaskChanger interface {
 // @Failure 400 {object} response.Response "Invalid request"
 // @Failure 500 {object} response.Response "Failed to update task"
 // @Router /task [patch]
-func New(log *slog.Logger, taskChanger TaskChanger) http.HandlerFunc {
+func New(log *slog.Logger, taskChanger TaskChanger, rdb *redis.RedisDB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.task.change.New"
 
@@ -93,6 +97,23 @@ func New(log *slog.Logger, taskChanger TaskChanger) http.HandlerFunc {
 			log.Error("Failed to update task", sl.Error(err))
 			render.JSON(w, r, response.Error("Failed to update task"))
 			return
+		}
+
+		updatedTask, err := taskChanger.GetTaskById(uuid.MustParse(req.Id))
+		if err != nil {
+			log.Error("Failed to load updated task for Redis", sl.Error(err))
+		} else {
+			taskJSON, err := json.Marshal(updatedTask)
+			if err != nil {
+				log.Error("Failed to marshal updated task", sl.Error(err))
+			} else {
+				cacheKey := "task:" + req.Id
+				if err := rdb.Set(r.Context(), cacheKey, string(taskJSON), 5*time.Minute); err != nil {
+					log.Error("Failed to update task in Redis", sl.Error(err))
+				} else {
+					log.Info("Task updated in Redis cache", slog.String("TaskId", req.Id))
+				}
+			}
 		}
 
 		log.Info("Task updated successfully", slog.String("TaskId", req.Id))

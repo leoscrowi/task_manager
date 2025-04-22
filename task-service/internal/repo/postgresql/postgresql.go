@@ -13,7 +13,6 @@ type Repository struct {
 	db *sql.DB
 }
 
-// TODO: изменить название интерфейса
 func NewDb(config string) (*Repository, error) {
 	db, err := sql.Open("postgres", config)
 
@@ -37,25 +36,17 @@ func (r *Repository) SaveTask(entity domain.Task) error {
 	}
 
 	query := `
-        INSERT INTO tasks (id, user_id, title, description, status, created_at, repeatable, parent_task_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO tasks (id, title, description, status, created_at, repeatable)
+        VALUES ($1, $2, $3, $4, $5, $6)
     `
-	var parentTaskId interface{}
-	if entity.ParentTaskId == uuid.Nil {
-		parentTaskId = nil
-	} else {
-		parentTaskId = entity.ParentTaskId
-	}
 
 	_, err = tx.Exec(query,
 		entity.Id,
-		entity.UserId,
 		entity.Title,
 		entity.Description,
 		entity.TaskStatus,
 		entity.CreatedAt,
 		entity.RepeatTask,
-		parentTaskId,
 	)
 
 	if err != nil {
@@ -97,7 +88,7 @@ func (r *Repository) GetTaskById(id uuid.UUID) (domain.Task, error) {
 	const op = "repo.postgresql.GetTaskById"
 
 	query := `
-		SELECT id, user_id, title, description, status, created_at, repeatable, parent_task_id
+		SELECT id, title, description, status, created_at, repeatable
 		FROM tasks
 		WHERE id = $1
 	`
@@ -107,13 +98,11 @@ func (r *Repository) GetTaskById(id uuid.UUID) (domain.Task, error) {
 	var task domain.Task
 	err := row.Scan(
 		&task.Id,
-		&task.UserId,
 		&task.Title,
 		&task.Description,
 		&task.TaskStatus,
 		&task.CreatedAt,
 		&task.RepeatTask,
-		&task.ParentTaskId,
 	)
 
 	if err != nil {

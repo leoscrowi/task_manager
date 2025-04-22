@@ -12,6 +12,7 @@ type Config struct {
 	Environment string     `yaml:"environment" env-default:"local"`
 	HTTPServer  HTTPServer `yaml:"http_server"`
 	Database    Database   `yaml:"database"`
+	Redis       Redis      `yaml:"redis"`
 }
 
 type HTTPServer struct {
@@ -27,6 +28,16 @@ type Database struct {
 	Password string `yaml:"password" env-default:"postgres"`
 	Name     string `yaml:"name" env-default:"task_manager"`
 	SSLMode  string `yaml:"sslmode" env-default:"disable"`
+}
+
+type Redis struct {
+	Host        string        `yaml:"host" env-default:"localhost"`
+	Port        int           `yaml:"port" env-default:"6379"`
+	User        string        `yaml:"user" env-default:"user"`
+	Password    string        `yaml:"password" env-default:""`
+	DB          int           `yaml:"db" env-default:"0"`
+	MaxRetries  int           `yaml:"max_retries" env-default:"4"`
+	DialTimeout time.Duration `yaml:"dial_timeout" env-default:"5s"`
 }
 
 func MustLoad() *Config {

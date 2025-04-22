@@ -22,3 +22,9 @@ services:
     environment:
       - CONFIG_PATH=/app/config/local.yaml
     restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
