@@ -1,0 +1,228 @@
+basePath: /task
+definitions:
+  change.Request:
+    properties:
+      description:
+        description: 'example: This is a new task description.'
+        type: string
+      id:
+        description: 'example: b063de04-6fd7-41cd-8f4c-8d113e786be8'
+        type: string
+      repeat_task:
+        description: |-
+          enum: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
+          example: DAILY
+        type: string
+      task_status:
+        description: |-
+          enum: TODO, IN_PROGRESS, DONE
+          example: TODO
+        type: string
+      title:
+        description: 'example: New Task Title'
+        type: string
+    required:
+    - id
+    type: object
+  change.Response:
+    properties:
+      error:
+        type: string
+      id:
+        type: string
+      status:
+        type: integer
+    required:
+    - id
+    type: object
+  delete.Request:
+    properties:
+      id:
+        description: 'example: b063de04-6fd7-41cd-8f4c-8d113e786be8'
+        type: string
+    required:
+    - id
+    type: object
+  delete.Response:
+    properties:
+      error:
+        type: string
+      id:
+        type: string
+      status:
+        type: integer
+    required:
+    - id
+    type: object
+  get.Request:
+    properties:
+      id:
+        description: 'example: b063de04-6fd7-41cd-8f4c-8d113e786be8'
+        type: string
+    required:
+    - id
+    type: object
+  get.Response:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      parent_task_id:
+        type: string
+      repeat_task:
+        type: string
+      status:
+        type: integer
+      task_status:
+        type: string
+      title:
+        type: string
+      user_id:
+        type: string
+    required:
+    - id
+    - user_id
+    type: object
+  response.Response:
+    properties:
+      error:
+        type: string
+      status:
+        type: integer
+    type: object
+  save.Request:
+    properties:
+      description:
+        description: 'example: This is a sample task description.'
+        type: string
+      parent_task_id:
+        description: 'example: b063de04-6fd7-41cd-8f4c-8d113e786be8'
+        type: string
+      repeat_task:
+        description: |-
+          enum: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
+          example: DAILY
+        type: string
+      title:
+        description: 'example: Sample Task'
+        example: Sample Task
+        type: string
+      user_id:
+        description: |-
+          required: true
+          example: b063de04-6fd7-41cd-8f4c-8d113e786be8
+        type: string
+    required:
+    - user_id
+    type: object
+  save.Response:
+    properties:
+      error:
+        type: string
+      status:
+        type: integer
+      task_id:
+        description: 'example: b063de04-6fd7-41cd-8f4c-8d113e786be8'
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample task service API.
+  title: Task service API
+  version: "1.0"
+paths:
+  /task:
+    delete:
+      consumes:
+      - application/json
+      description: Delete task by its UUID
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/delete.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task deleted successfully
+          schema:
+            $ref: '#/definitions/delete.Response'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to delete task
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete task by uuid
+      tags:
+      - Task
+    patch:
+      consumes:
+      - application/json
+      description: Update task by its UUID
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/change.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task updated successfully
+          schema:
+            $ref: '#/definitions/change.Response'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to update task
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update task by uuid
+      tags:
+      - Task
+    post:
+      consumes:
+      - application/json
+      description: Create and save task
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/save.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Task created successfully
+          schema:
+            $ref: '#/definitions/save.Response'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to save task
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Create task
+      tags:
+      - Task
+swagger: "2.0"
