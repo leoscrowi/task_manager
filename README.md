@@ -23,11 +23,9 @@ http://localhost:8080/task
 #### Request Body:
 ```json
 {
-    "user_id": "b063de04-6fd7-41cd-8f4c-8d113e786be8",
-    "title": "Sample Task",
-    "description": "This is a sample task description.",
-    "repeat_task": "DAILY",
-    "parent_task_id": "b063de04-6fd7-41cd-8f4c-8d113e786be8"
+  "title": "Sample Task",
+  "description": "This is a sample task description.",
+  "repeat_task": "DAILY" // Options: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
 }
 ```
 #### Responses:
@@ -67,18 +65,17 @@ http://localhost:8080/task
   "description": "This is a sample task description.",
   "repeat_task": "DAILY" // Options: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
 }
-
 ```
 #### Responses:
-- **200 OK**: Task deleted successfully.
+- **201 OK**: Task deleted successfully.
 - **400 Bad Request**: Invalid request parameters.
 - **500 Internal Server Error**: Server error during task deleting.
 
 
-### 4. Create Task
-- **Method**: `POST`
+### 4. Get Task
+- **Method**: `GET`
 - **Endpoint**: `/task`
-- **Description**: Creates and saves a new task.
+- **Description**: Gets task by UUID.
 
 #### Request Body:
 ```json
