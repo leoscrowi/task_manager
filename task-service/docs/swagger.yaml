@@ -72,8 +72,6 @@ definitions:
         type: string
       id:
         type: string
-      parent_task_id:
-        type: string
       repeat_task:
         type: string
       status:
@@ -82,11 +80,8 @@ definitions:
         type: string
       title:
         type: string
-      user_id:
-        type: string
     required:
     - id
-    - user_id
     type: object
   response.Response:
     properties:
@@ -100,9 +95,6 @@ definitions:
       description:
         description: 'example: This is a sample task description.'
         type: string
-      parent_task_id:
-        description: 'example: b063de04-6fd7-41cd-8f4c-8d113e786be8'
-        type: string
       repeat_task:
         description: |-
           enum: DAILY, WEEKLY, MONTHLY, YEARLY, NEVER
@@ -110,15 +102,7 @@ definitions:
         type: string
       title:
         description: 'example: Sample Task'
-        example: Sample Task
         type: string
-      user_id:
-        description: |-
-          required: true
-          example: b063de04-6fd7-41cd-8f4c-8d113e786be8
-        type: string
-    required:
-    - user_id
     type: object
   save.Response:
     properties:

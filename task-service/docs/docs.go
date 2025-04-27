@@ -240,8 +240,7 @@ const docTemplate = `{
         "get.Response": {
             "type": "object",
             "required": [
-                "id",
-                "user_id"
+                "id"
             ],
             "properties": {
                 "created_at": {
@@ -256,9 +255,6 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "parent_task_id": {
-                    "type": "string"
-                },
                 "repeat_task": {
                     "type": "string"
                 },
@@ -269,9 +265,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "title": {
-                    "type": "string"
-                },
-                "user_id": {
                     "type": "string"
                 }
             }
@@ -289,16 +282,9 @@ const docTemplate = `{
         },
         "save.Request": {
             "type": "object",
-            "required": [
-                "user_id"
-            ],
             "properties": {
                 "description": {
                     "description": "example: This is a sample task description.",
-                    "type": "string"
-                },
-                "parent_task_id": {
-                    "description": "example: b063de04-6fd7-41cd-8f4c-8d113e786be8",
                     "type": "string"
                 },
                 "repeat_task": {
@@ -307,11 +293,6 @@ const docTemplate = `{
                 },
                 "title": {
                     "description": "example: Sample Task",
-                    "type": "string",
-                    "example": "Sample Task"
-                },
-                "user_id": {
-                    "description": "required: true\nexample: b063de04-6fd7-41cd-8f4c-8d113e786be8",
                     "type": "string"
                 }
             }

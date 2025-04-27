@@ -11,6 +11,12 @@ services:
       - "6432:5432"
     restart: unless-stopped
 
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   http-server:
     build:
       context: ./task-service
@@ -18,13 +24,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./task-service/config/local.yaml:/app/config/local.yaml
+      - ./task-service/config/local.yaml:/config/local.yaml
     environment:
-      - CONFIG_PATH=/app/config/local.yaml
-    restart: unless-stopped
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
+      - CONFIG_PATH=/config/local.yaml
     restart: unless-stopped

@@ -1,16 +1,14 @@
-FROM golang:1.24.2
-
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-
+# first stage: build the Go application
+FROM golang:latest AS build
 WORKDIR /app
-
-COPY go.mod go.sum ./
-RUN go mod download
-
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.go
 
-RUN go build -o task-service-server ./cmd
 
+# second stage: run the Go application
+FROM scratch
+COPY --from=build /app/main /main
+COPY --from=build /app/config /config
+COPY --from=build /app/migrations /migrations
 EXPOSE 8080
-
-CMD ["./task-service-server"]
+CMD ["/main"]
