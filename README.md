@@ -84,6 +84,6 @@ http://localhost:8080/task
 }
 ```
 #### Responses:
-- **200 OK**: Task deleted successfully.
+- **200 OK**: Task got successfully.
 - **400 Bad Request**: Invalid request parameters.
 - **500 Internal Server Error**: Server error during task deleting.
